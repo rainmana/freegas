@@ -137,3 +137,13 @@ Freegas stays on **Node.js for now**. [Release automation](docs/releases.md) pro
 Other pit stops: persistent quota budgets, directory-import previews, and more tested harness recipes. Contributions welcome, especially sourced Pre-rolls and errors that make you exhale through your nose. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 MIT licensed. Original repository-template notices remain in [LICENSE](LICENSE). Thanks to [Traceloop Hub](https://github.com/traceloop/hub), [Free-LLM](https://github.com/nejib1/Free-LLM), and the people running the actual Gas Stations.
+
+## Personal capacity and employer disclosure
+
+Freegas is an independent personal project. Alec and Ben participate solely in their individual capacities, and contributors speak only for themselves. Neither Alec nor Ben acts as an agent, representative, or spokesperson for any employer in connection with this project.
+
+All code, documentation, statements, opinions, examples, demonstrations, generated outputs, comments, discussions, humor, and other materials in or associated with this repository are provided in that personal capacity. Nothing in this repository or its associated communications represents, states, or should be construed as reflecting the views, positions, policies, practices, products, services, or official guidance of any past or present employer of Alec, Ben, or any contributor, or of any such employer's affiliates or personnel.
+
+No employer sponsorship, endorsement, approval, review, authorization, or assumption of responsibility is expressed or implied by this project's existence, publication, distribution, or use. References to employment, professional roles, qualifications, or experience are personal background only; they do not establish an affiliation between this project and an employer or authorize anyone to speak on an employer's behalf. References or links to third-party materials likewise do not constitute employer endorsement.
+
+This disclosure does not supersede applicable law, employment obligations, third-party rights, or the terms of this repository's license.

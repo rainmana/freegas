@@ -4,13 +4,14 @@ Observed locally on 2026-10-17, Windows x64, Node.js 25.9.0:
 
 | Check | Result |
 | --- | --- |
-| Unit/local HTTP/CLI and release guards | 12 tests passed |
+| Unit/local HTTP/CLI and release guards | 13 tests passed, including cancellation of indefinitely open upstream bodies with invalid/missing content types |
 | Source syntax | `npm run check` passed |
 | Release package | `.tgz` extracted; packaged help, init, and Hub config generation passed |
 | Workflow syntax | actionlint 1.7.12 passed |
 | Hosted Node matrix | Windows/Linux/macOS, Node 22/24: all six test and package jobs passed in [the initial CI run](https://github.com/rainmana/freegas/actions/runs/39076613332) |
 | Hosted Hub build | Rust 1.88.0 on Linux built the pinned source and passed the actual gateway integration in [the initial Hub run](https://github.com/rainmana/freegas/actions/runs/39076613347) |
 | Actual Hub, deterministic providers | Nonstream tool loop wrote a verified file; 429 fell back once and cooldown prevented repeat hits; streamed text survived |
+| Task-alias isolation through actual Hub | Separate code/chat/research stations selected only for their requested aliases, despite higher-priority alternatives; auto selected research and unknown aliases returned 404 without inference |
 | Actual Hub, live Venice | Tool round trip and streamed text passed |
 | OpenCode 1.19.3 → Hub → Freegas → Venice | Streamed coding session completed a `write` tool call; resulting file contained `FREEGAS_HARNESS_OK` |
 | Content tracing control | Hub launched with `TRACE_CONTENT_ENABLED=false`; the test prompt was absent from captured service logs |

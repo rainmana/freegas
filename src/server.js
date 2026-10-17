@@ -34,7 +34,11 @@ export function createServer(router, { token } = {}) {
       if (body.messages.some(m => Array.isArray(m.content) && m.content.some(c => !c || typeof c !== 'object'))) throw new RouteError(400, 'invalid_request', 'Content parts must be objects.');
       routed = await router.route(body, controller.signal);
       const type = routed.response.headers.get('content-type') ?? '';
-      if (!(body.stream ? type.includes('text/event-stream') : type.includes('application/json'))) throw new RouteError(502, 'invalid_upstream', 'The pump returned the wrong fuel type.');
+      if (!(body.stream ? type.includes('text/event-stream') : type.includes('application/json'))) {
+        // Release an unread/indefinitely open body before finish() clears its deadline.
+        if (routed.response.body) await routed.response.body.cancel().catch(() => {});
+        throw new RouteError(502, 'invalid_upstream', 'The pump returned the wrong fuel type.');
+      }
       res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store', 'x-freegas-provider': routed.provider });
       for await (const chunk of routed.response.body) {
         if (!res.write(chunk)) await once(res, 'drain', { signal: controller.signal });

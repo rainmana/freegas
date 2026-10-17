@@ -39,6 +39,7 @@ const tool = { type: 'function', function: { name: 'write_smoke_file', descripti
 const completion = message => ({ id: 'chatcmpl-smoke', object: 'chat.completion', created: 1, model: 'fixture', choices: [{ index: 0, message, finish_reason: message.tool_calls ? 'tool_calls' : 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } });
 let quotaCalls = 0;
 let providerCalls = 0;
+const stationRequests = [];
 try {
   await mkdir(join(home, 'lists'));
   let providers;
@@ -49,10 +50,12 @@ try {
     const station = http.createServer(async (req, res) => {
       let raw = ''; for await (const chunk of req) raw += chunk;
       const body = JSON.parse(raw);
+      stationRequests.push({ path: req.url, model: body.model });
       if (req.url.startsWith('/dry/')) { quotaCalls++; res.writeHead(429, { 'retry-after': '60' }); res.end(); return; }
       providerCalls++;
       const hasResult = body.messages.some(m => m.role === 'tool');
-      const message = body.tools?.length && !hasResult ? { role: 'assistant', content: null, tool_calls: [{ id: 'call_smoke', type: 'function', function: { name: 'write_smoke_file', arguments: JSON.stringify({ content: 'FREEGAS_OK' }) } }] } : { role: 'assistant', content: 'FREEGAS_OK' };
+      const reply = req.url.startsWith('/research/') ? 'RESEARCH_ONLY' : req.url.startsWith('/chat/') ? 'CHAT_ONLY' : 'FREEGAS_OK';
+      const message = body.tools?.length && !hasResult ? { role: 'assistant', content: null, tool_calls: [{ id: 'call_smoke', type: 'function', function: { name: 'write_smoke_file', arguments: JSON.stringify({ content: 'FREEGAS_OK' }) } }] } : { role: 'assistant', content: reply };
       if (body.stream) {
         res.writeHead(200, { 'content-type': 'text/event-stream' });
         const delta = { ...message }; delete delta.role;
@@ -64,6 +67,7 @@ try {
     station.listen(0, '127.0.0.1'); await once(station, 'listening'); servers.push(station);
     const base = `http://127.0.0.1:${station.address().port}`;
     providers = ['dry', 'working'].map((name, index) => ({ id: name, baseUrl: `${base}/${name}`, models: [{ id: 'fixture', tasks: ['code'], capabilities: ['tools'], context: 32000, priority: 80 - index * 20, offer: 'local' }] }));
+    for (const [task, priority] of [['research', 100], ['chat', 90]]) providers.push({ id: task, baseUrl: `${base}/${task}`, models: [{ id: `${task}-fixture`, tasks: [task], capabilities: ['tools'], context: 32000, priority, offer: 'local' }] });
   }
   await writeFile(join(home, 'config.json'), JSON.stringify({ version: 1, lists: ['smoke'], allowTrials: live, timeoutMs: 60000 }));
   await writeFile(join(home, 'lists/smoke.json'), JSON.stringify({ version: 1, name: 'Integration smoke Pre-roll', providers }));
@@ -91,7 +95,21 @@ try {
   const final = await (await chat({ messages })).json(); assert.ok(final.choices[0].message.content);
   assert.equal(await readFile(join(home, 'result.txt'), 'utf8'), 'FREEGAS_OK');
   report.checks.push('nonstream tool round trip and real file side effect');
-  if (!live) { assert.equal(quotaCalls, 1); assert.equal(providerCalls, 2); report.checks.push('429 fallback and cooldown through actual Hub'); }
+  if (!live) {
+    assert.equal(quotaCalls, 1); assert.equal(providerCalls, 2);
+    assert.ok(stationRequests.every(r => r.path.startsWith('/dry/') || r.path.startsWith('/working/')), 'Code requests escaped their task stations.');
+    report.checks.push('429 fallback and cooldown through actual Hub');
+    for (const [alias, station, content] of [['code', 'working', 'FREEGAS_OK'], ['chat', 'chat', 'CHAT_ONLY'], ['research', 'research', 'RESEARCH_ONLY'], ['auto', 'research', 'RESEARCH_ONLY']]) {
+      const result = await (await chat({ model: `freegas/${alias}`, messages: [{ role: 'user', content: 'Task isolation probe.' }] })).json();
+      assert.equal(result.choices[0].message.content, content, `${alias} reached the wrong station.`);
+      assert.ok(stationRequests.at(-1).path.startsWith(`/${station}/`));
+      assert.equal(stationRequests.at(-1).model, ['research', 'chat'].includes(station) ? `${station}-fixture` : 'fixture');
+    }
+    const beforeUnknown = stationRequests.length;
+    const unknown = await fetch(`${hubBase}/api/v1/chat/completions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: 'freegas/unknown', messages: [{ role: 'user', content: 'Reject unknown alias.' }] }) });
+    assert.equal(unknown.status, 404); assert.equal(stationRequests.length, beforeUnknown);
+    report.checks.push('code/chat/research aliases stay isolated; auto selects the higher-priority research station; unknown alias rejected');
+  }
   const stream = await (await chat({ messages: [{ role: 'user', content: 'Reply exactly FREEGAS_OK.' }], stream: true })).text();
   assert.match(stream, /FREEGAS_OK/, `Stream lost its content: ${stream}`);
   report.checks.push('streamed text through actual Hub');

@@ -119,6 +119,25 @@ test('HTTP boundary: authentication, browser block, malformed JSON, models, over
   assert.equal(calls, 0);
 });
 
+test('invalid upstream content type cancels an indefinitely open response before returning 502', async t => {
+  for (const type of ['text/html', undefined]) {
+    let closed;
+    const upstream = await listen(http.createServer((req, res) => {
+      closed = once(res, 'close', { signal: AbortSignal.timeout(2000) });
+      res.writeHead(200, type ? { 'content-type': type } : {});
+      res.write('private invalid upstream content');
+      // Deliberately leave the body open. The proxy must cancel it.
+    }), t);
+    const router = setup([provider('a', upstream)]);
+    const base = await listen(createServer(router), t);
+    const response = await fetch(`${base}/v1/chat/completions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(request()) });
+    assert.equal(response.status, 502);
+    assert.equal((await response.json()).error.code, 'invalid_upstream');
+    await closed;
+    assert.equal(router.health.get('a/test-model').inFlight, 0);
+  }
+});
+
 test('packs reject secrets, unknown fields, unsafe URLs and duplicate models', () => {
   const pack = () => ({ version: 1, name: 'test', providers: [provider('a')] });
   assert.equal(validatePack(pack()).name, 'test');
