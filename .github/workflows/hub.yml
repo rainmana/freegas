@@ -1,0 +1,42 @@
+name: Hub road test
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  hub:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@1.88.0
+      - uses: actions/checkout@v5
+        with:
+          repository: traceloop/hub
+          ref: e1be468f87de077ce066fbdebc858e913dc889a1
+          path: .integration/hub
+          persist-credentials: false
+      - name: Cache pinned Hub build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .integration/hub/target
+          key: hub-linux-rust-1.88.0-e1be468-${{ hashFiles('scripts/build-hub.js') }}
+      - name: Build pinned upstream Hub
+        run: node scripts/build-hub.js
+        env:
+          HUB_RUST_TOOLCHAIN: 1.88.0
+      - name: Run actual Hub, Freegas, quota fallback, and tool loop
+        run: npm run test:hub
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hub-report
+          path: .integration/hub-report.json
+          if-no-files-found: error
