@@ -18,10 +18,11 @@ export function validatePack(pack) {
   for (const p of pack.providers) {
     fields(p, ['id', 'baseUrl', 'keyEnv', 'models']);
     check(typeof p.id === 'string' && id.test(p.id) && !ids.has(p.id), 'Provider IDs must be unique, simple names.'); ids.add(p.id);
+    check(typeof p.baseUrl === 'string', 'Endpoint URLs must be strings. No mystery fuel containers.');
     const url = new URL(p.baseUrl);
     check(!url.username && !url.password && !url.search && !url.hash, 'Endpoint URLs cannot contain credentials, query strings, or fragments.');
     check(url.protocol === 'https:' || (url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)), 'Use HTTPS, or HTTP on loopback for local inference.');
-    check(p.keyEnv === undefined || envName.test(p.keyEnv), 'keyEnv must name an environment variable, never contain a key.');
+    check(p.keyEnv === undefined || (typeof p.keyEnv === 'string' && envName.test(p.keyEnv)), 'keyEnv must name an environment variable, never contain a key.');
     check(Array.isArray(p.models) && p.models.length > 0 && p.models.length <= 100, 'Each provider needs 1–100 models.');
     const models = new Set();
     for (const m of p.models) {
@@ -50,7 +51,7 @@ export async function saveJson(path, value, exclusive = false) {
   await rename(temp, path);
 }
 export function validateCredentials(value) {
-  fields(value, Object.keys(value));
+  fields(value, Object.keys(value ?? {}));
   check(Object.entries(value).every(([k, v]) => envName.test(k) && typeof v === 'string' && v.length > 0 && v.length <= 4096 && !/[\r\n]/.test(v)), 'Credentials must map ENV_NAMES to nonempty single-line strings.');
   return value;
 }

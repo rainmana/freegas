@@ -20,7 +20,7 @@ export function createServer(router, { token } = {}) {
         return json(res, 200, { object: 'list', data: ['auto', ...tasks].filter((v, i, a) => a.indexOf(v) === i).map(t => ({ id: `freegas/${t}`, object: 'model', created: 0, owned_by: 'freegas' })) });
       }
       if (req.url !== '/v1/chat/completions' || req.method !== 'POST') throw new RouteError(404, 'not_found', 'Wrong driveway. Try POST /v1/chat/completions.');
-      if (!req.headers['content-type']?.startsWith('application/json')) throw new RouteError(415, 'content_type', 'The tank takes application/json.');
+      if (req.headers['content-type']?.split(';', 1)[0].trim().toLowerCase() !== 'application/json') throw new RouteError(415, 'content_type', 'The tank takes application/json.');
       const chunks = []; let size = 0;
       for await (const chunk of req) { size += chunk.length; if (size > 2 * 1024 * 1024) throw new RouteError(413, 'too_large', 'Two megabytes of prompt is enough gas for one trip.'); chunks.push(chunk); }
       let body;
@@ -34,7 +34,8 @@ export function createServer(router, { token } = {}) {
       if (body.messages.some(m => Array.isArray(m.content) && m.content.some(c => !c || typeof c !== 'object'))) throw new RouteError(400, 'invalid_request', 'Content parts must be objects.');
       routed = await router.route(body, controller.signal);
       const type = routed.response.headers.get('content-type') ?? '';
-      if (!(body.stream ? type.includes('text/event-stream') : type.includes('application/json'))) {
+      const mediaType = type.split(';', 1)[0].trim().toLowerCase();
+      if (mediaType !== (body.stream ? 'text/event-stream' : 'application/json')) {
         // Release an unread/indefinitely open body before finish() clears its deadline.
         if (routed.response.body) await routed.response.body.cancel().catch(() => {});
         throw new RouteError(502, 'invalid_upstream', 'The pump returned the wrong fuel type.');

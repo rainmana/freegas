@@ -17,8 +17,13 @@ const temp = await mkdtemp(join(tmpdir(), 'freegas-package-'));
 try {
   execFileSync('tar', ['-xzf', archive, '-C', temp]);
   const cli = join(temp, 'package', 'bin', 'freegas.js');
-  const icon = await readFile(join(temp, 'package', 'assets', 'freegas-icon.png'));
-  if (!icon.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) throw new Error('Packaged README icon is missing or invalid.');
+  for (const asset of ['freegas-icon.png', 'freegas-road-trip.jpg']) {
+    const image = await readFile(join(temp, 'package', 'assets', asset));
+    const valid = asset.endsWith('.png')
+      ? image.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+      : image.subarray(0, 3).equals(Buffer.from([255, 216, 255]));
+    if (!valid) throw new Error(`Packaged README image is missing or invalid: ${asset}`);
+  }
   const output = execFileSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
   if (!output.includes('Ass, gas, or grass - nobody rides for free.')) throw new Error('Packaged CLI smoke failed.');
   execFileSync(process.execPath, [cli, 'init', '--home', join(temp, 'home')]);

@@ -35,6 +35,12 @@ An idea from Alec and Ben, somewhere between useful infrastructure and a gas sta
 
 ---
 
+## A quick lap around the station
+
+![Recorded Freegas CLI session: importing a Pre-roll, checking stations, falling back after a 429, and completing a verified file-writing tool round trip](assets/freegas-road-trip.jpg)
+
+Captured from real CLI processes and HTTP requests in the automated user test, rendered in a transcript viewer. Local fixture providers simulate the quota failure and tool-capable response; this is not a live provider or free-quota demonstration. Reproduce it with `npm run demo`.
+
 ## Pull up to the pump
 
 You need Node.js **22.16+**. No npm dependencies, subscriptions, or secret handshake. From this checkout:

@@ -4,7 +4,7 @@ Observed locally on 2026-10-17, Windows x64, Node.js 25.9.0:
 
 | Check | Result |
 | --- | --- |
-| Unit/local HTTP/CLI and release guards | 13 tests passed, including cancellation of indefinitely open upstream bodies with invalid/missing content types |
+| Unit/local HTTP/CLI and release guards | 38 tests passed; core coverage: 100% lines, 98.88% branches, 97.44% functions (Node 25.9.0); includes real subprocess user journeys and cancellation of indefinitely open upstream bodies |
 | Source syntax | `npm run check` passed |
 | Release package | `.tgz` extracted; packaged help, init, and Hub config generation passed |
 | Workflow syntax | actionlint 1.7.12 passed |
@@ -27,10 +27,14 @@ The OpenCode session used a disposable directory and isolated configuration/data
 ```sh
 npm run check
 npm test
+npm run test:coverage
+npm run test:user
 npm run package
 node scripts/build-hub.js
 npm run test:hub
 ```
+
+See [the test map](testing.md) for regression coverage, CI thresholds, and reproduction of the recorded CLI screenshot with `npm run demo`.
 
 `HUB_BIN` can point at another already-built Hub executable. The report records the expected revision; ensure an overridden binary actually corresponds to it. Reports are written to ignored `.integration/*-report.json` files.
 
