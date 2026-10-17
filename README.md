@@ -12,7 +12,7 @@
   <a href="https://github.com/rainmana/freegas/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/rainmana/freegas/release.yml?branch=main&amp;style=flat-square&amp;label=CI" alt="Build and release workflow status"></a>
   <a href="package.json"><img src="https://img.shields.io/badge/Node.js-22.16%2B-05d88b?style=flat-square&amp;logo=nodedotjs&amp;logoColor=white" alt="Node.js 22.16 or newer"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-05d88b?style=flat-square" alt="MIT license"></a>
-  <a href="https://github.com/rainmana/freegas/stargazers"><img src="https://img.shields.io/github/stars/rainmana/freegas.svg?style=flat-square&amp;color=ffd166" alt="GitHub stars"></a>
+  <a href="https://github.com/rainmana/freegas/stargazers"><img src="https://flat.badgen.net/github/stars/rainmana/freegas?icon=github&amp;color=ffd166" alt="GitHub stars"></a>
 </p>
 
 <p align="center">
