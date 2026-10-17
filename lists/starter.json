@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "name": "The starter Pre-roll",
+  "source": "https://github.com/nejib1/Free-LLM",
+  "providers": [
+    {
+      "id": "openrouter",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "keyEnv": "OPENROUTER_API_KEY",
+      "models": [{ "id": "openrouter/free", "tasks": ["chat", "code"], "capabilities": ["tools", "json", "json_schema", "vision"], "context": 32000, "priority": 60, "offer": "free" }]
+    },
+    {
+      "id": "groq",
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "keyEnv": "GROQ_API_KEY",
+      "models": [{ "id": "llama-3.3-70b-versatile", "tasks": ["chat", "code"], "capabilities": ["tools", "json"], "context": 131072, "priority": 80, "offer": "free" }]
+    },
+    {
+      "id": "ollama",
+      "baseUrl": "http://127.0.0.1:11434/v1",
+      "models": [{ "id": "qwen2.5-coder:7b", "tasks": ["code", "chat"], "capabilities": [], "context": 4096, "priority": 20, "offer": "local" }]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+name: Fuel delivery
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fuel-delivery-main
+  cancel-in-progress: false
+jobs:
+  tests:
+    uses: ./.github/workflows/test.yml
+  hub:
+    uses: ./.github/workflows/hub.yml
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: [tests, hub]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: dist
+      - name: Require a version PR merged at this tested commit
+        id: state
+        run: node scripts/release-state.js
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Create version tag and draft release
+        if: steps.state.outputs.candidate == 'true'
+        id: published
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        with:
+          skip-github-pull-request: true
+      - name: Attach tested package and publish release
+        if: steps.state.outputs.candidate == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/finalize-release.js
+      - name: Propose the next version PR
+        id: proposed
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        with:
+          skip-github-release: true
+      - name: Explicitly test bot-created version PRs
+        run: node scripts/dispatch-release-tests.js
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PRS: ${{ steps.proposed.outputs.prs }}
