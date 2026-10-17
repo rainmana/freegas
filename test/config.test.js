@@ -47,6 +47,7 @@ test('invalid, oversized, and corrupt credential files fail closed', async t => 
 });
 
 test('credentials reject invalid names and values without accepting inline multiline secrets', () => {
+  assert.throws(() => validateCredentials(null), /Expected an object/);
   for (const value of [null, [], 'key', { lower: 'key' }, { KEY: '' }, { KEY: 42 }, { KEY: 'x\ny' }, { KEY: 'x\ry' }, { KEY: 'x'.repeat(4097) }]) assert.throws(() => validateCredentials(value));
   assert.deepEqual(validateCredentials({ KEY_1: 'fixture' }), { KEY_1: 'fixture' });
 });
@@ -55,6 +56,7 @@ test('packs reject malformed and out-of-bound community lists', () => {
   const edits = [
     p => { p.version = 2; }, p => { p.providers = []; }, p => { p.providers.push(structuredClone(p.providers[0])); },
     p => { p.providers[0].id = '../escape'; }, p => { p.providers[0].keyEnv = 'bad-key'; },
+    p => { p.providers[0].keyEnv = ['KEY']; }, p => { p.providers[0].baseUrl = ['https://example.org/v1']; },
     p => { p.providers[0].baseUrl = 'https://example.org/v1?key=secret'; },
     p => { p.providers[0].baseUrl = 'https://example.org/#secret'; },
     p => { p.providers[0].models = []; }, p => { p.providers[0].models[0].context = 0; },

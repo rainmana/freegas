@@ -4,7 +4,7 @@ Observed locally on 2026-10-17, Windows x64, Node.js 25.9.0:
 
 | Check | Result |
 | --- | --- |
-| Unit/local HTTP/CLI and release guards | 38 tests passed; core coverage: 100% lines, 98.86% branches, 97.44% functions (Node 25.9.0); includes real subprocess user journeys and cancellation of indefinitely open upstream bodies |
+| Unit/local HTTP/CLI and release guards | 38 tests passed; core coverage: 100% lines, 98.88% branches, 97.44% functions (Node 25.9.0); includes real subprocess user journeys and cancellation of indefinitely open upstream bodies |
 | Source syntax | `npm run check` passed |
 | Release package | `.tgz` extracted; packaged help, init, and Hub config generation passed |
 | Workflow syntax | actionlint 1.7.12 passed |
