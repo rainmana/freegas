@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { once } from 'node:events';
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm, writeFile, readFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -11,7 +11,7 @@ const cliPath = resolve('bin/freegas.js');
 // A subprocess receives only what the test needs, never the developer's inference credentials.
 const env = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => !/API_KEY|FREEGAS_HOME|NODE_OPTIONS/i.test(key)));
 async function run(home, args, expected = 0) {
-  const child = spawn(process.execPath, [cliPath, ...args, '--home', home], { env: env(), stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [cliPath, ...args, '--home', home, '--no-open'], { env: env(), stdio: ['ignore', 'pipe', 'pipe'] });
   let output = ''; child.stdout.on('data', b => { output += b; }); child.stderr.on('data', b => { output += b; });
   const [code] = await once(child, 'exit'); assert.equal(code, expected, output); return output;
 }
@@ -39,8 +39,8 @@ test('user mistakes fail cleanly without overwriting installed lists or credenti
 });
 
 test('real CLI road trip: share a list, authenticate, fail over, use a tool, stream, and shut down', { timeout: 20000 }, async t => {
-  const home = await temp(t); const transcript = [];
-  const command = async args => { const output = await run(home, args); transcript.push({ command: `freegas ${args.map(a => a === home ? '<home>' : a.startsWith(home) ? `<home>/${a.slice(home.length + 1)}` : a).join(' ')}`, output: output.replaceAll(home, '<home>') }); return output; };
+  const home = await temp(t);
+  const command = args => run(home, args);
   const received = []; let dryCalls = 0;
   const upstream = http.createServer(async (req, res) => {
     if (req.url.startsWith('/dry/')) { dryCalls++; res.writeHead(429, { 'retry-after': '60' }); res.end('private quota details'); return; }
@@ -76,7 +76,7 @@ test('real CLI road trip: share a list, authenticate, fail over, use a tool, str
   // Reserve an ephemeral port, then release immediately before launching the real process.
   const reservation = http.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
   const port = reservation.address().port; await new Promise(resolve => reservation.close(resolve));
-  const child = spawn(process.execPath, [cliPath, 'serve', '--home', home, '--port', String(port)], { env: { ...env(), FREEGAS_API_KEY: 'fixture-local-token' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [cliPath, 'serve', '--no-open', '--home', home, '--port', String(port)], { env: { ...env(), FREEGAS_API_KEY: 'fixture-local-token' }, stdio: ['ignore', 'pipe', 'pipe'] });
   const exited = once(child, 'exit'); let logs = '';
   t.after(async () => { if (child.exitCode === null) { child.kill(); await exited; } });
   const ready = new Promise((resolveReady, reject) => {
@@ -84,6 +84,12 @@ test('real CLI road trip: share a list, authenticate, fail over, use a tool, str
     child.once('error', reject); child.once('exit', code => reject(new Error(`CLI exited before ready: ${code}: ${logs}`)));
   });
   await ready;
+  const base = `http://127.0.0.1:${port}`;
+  assert.match(await (await fetch(base)).text(), /The forecourt/);
+  for (const path of ['/dashboard.js', '/dashboard.css', '/icon.png']) assert.equal((await fetch(base + path)).status, 200);
+  assert.equal((await fetch(base + '/api/status')).status, 401);
+  const status = () => fetch(base + '/api/status', { headers: { authorization: 'Bearer fixture-local-token' } }).then(r => r.json());
+  assert.equal((await status()).totals.requests, 0);
   const url = `http://127.0.0.1:${port}/v1/chat/completions`;
   const send = (body, token = 'fixture-local-token') => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(5000) });
   const messages = [{ role: 'user', content: 'private-user-prompt' }];
@@ -96,10 +102,14 @@ test('real CLI road trip: share a list, authenticate, fail over, use a tool, str
   messages.push(assistant, { role: 'tool', tool_call_id: 'call_1', content: 'File written' });
   const final = await send(request); const content = (await final.json()).choices[0].message.content;
   assert.equal(content, 'FREEGAS_OK'); assert.equal(await readFile(artifact, 'utf8'), content);
-  transcript.push({ command: 'harness → freegas/code (write_file tool round trip)', output: `${first.status} OK · provider: ${first.headers.get('x-freegas-provider')}\nanswer.txt: ${content}\n${dryCalls} quota failure; next request skipped the cooling pump.` });
   const stream = await send({ model: 'freegas/code', messages: [{ role: 'user', content: 'stream' }], stream: true });
   assert.equal(stream.status, 200); const text = await stream.text(); assert.match(text, /Fuel acquired ⛽/); assert.match(text, /data: \[DONE\]/);
-  transcript.push({ command: 'harness → freegas/code (stream: true)', output: text.trimEnd() });
+  const dashboard = await status();
+  assert.equal(dashboard.totals.requests, 3); assert.equal(dashboard.totals.completed, 3); assert.equal(dashboard.totals.fallbacks, 1);
+  assert.equal(dashboard.stations.find(s => s.provider === 'dry').status, 'cooldown');
+  assert.equal(dashboard.stations.find(s => s.provider === 'working').status, 'observed_success');
+  assert.ok(dashboard.activity.some(event => event.type === 'fallback'));
+  assert.doesNotMatch(JSON.stringify(dashboard), /fixture-provider-secret|fixture-local-token|private-user-prompt|private quota details|FREEGAS_OK/);
   assert.equal(dryCalls, 1); assert.equal(received.length, 3);
   assert.ok(received.every(r => r.authorization === 'Bearer fixture-provider-secret' && r.body.model === 'fixture-coder'));
   // A second process cannot bind the same station, and must exit cleanly with a useful message.
@@ -108,9 +118,4 @@ test('real CLI road trip: share a list, authenticate, fail over, use a tool, str
   if (process.platform !== 'win32') { assert.equal(code, 0); assert.equal(signal, null); }
   else assert.ok(code !== null || signal !== null);
   assert.doesNotMatch(logs, /fixture-provider-secret|fixture-local-token|private-user-prompt|private quota details/);
-  transcript.push({ command: 'freegas serve --port <port>', output: logs.replaceAll(String(port), '<port>').trimEnd() });
-  if (process.env.FREEGAS_RECORD_DEMO === '1') {
-    await mkdir('.integration', { recursive: true });
-    await writeFile('.integration/demo-transcript.json', JSON.stringify({ fixture: true, transcript }, null, 2));
-  }
 });

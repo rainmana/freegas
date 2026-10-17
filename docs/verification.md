@@ -4,7 +4,9 @@ Observed locally on 2026-10-17, Windows x64, Node.js 25.9.0:
 
 | Check | Result |
 | --- | --- |
-| Unit/local HTTP/CLI and release guards | 38 tests passed; core coverage: 100% lines, 98.88% branches, 97.44% functions (Node 25.9.0); includes real subprocess user journeys and cancellation of indefinitely open upstream bodies |
+| Unit/local HTTP/CLI and release guards | 44 tests passed; core coverage: 100% lines, 99.13% branches, 98% functions (Node 25.9.0); includes real subprocess user journeys, dashboard state/access controls, and cancellation of indefinitely open upstream bodies |
+| Real dashboard browser checks | Actual `serve --port 5050` app updated after two real Venice requests (JSON and SSE); pause/resume and manual refresh passed. A separate token-protected instance rejected an incorrect token, unlocked with the correct token, and forgot it on reload |
+| README screenshot | Full-page browser capture of the actual dashboard and its observed live request activity; the transcript viewer was removed |
 | Source syntax | `npm run check` passed |
 | Release package | `.tgz` extracted; packaged help, init, and Hub config generation passed |
 | Workflow syntax | actionlint 1.7.12 passed |
@@ -34,7 +36,7 @@ node scripts/build-hub.js
 npm run test:hub
 ```
 
-See [the test map](testing.md) for regression coverage, CI thresholds, and reproduction of the recorded CLI screenshot with `npm run demo`.
+See [the test map](testing.md) for regression coverage, CI thresholds, and opening the actual dashboard with `freegas serve`.
 
 `HUB_BIN` can point at another already-built Hub executable. The report records the expected revision; ensure an overridden binary actually corresponds to it. Reports are written to ignored `.integration/*-report.json` files.
 

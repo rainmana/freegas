@@ -6,6 +6,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { load, readJson, saveJson, validatePack, validateCredentials, MAX_FILE } from '../src/config.js';
 import { FuelRouter } from '../src/router.js';
 import { createServer } from '../src/server.js';
+import { openDashboard } from '../src/browser.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const help = `FREEGAS — Ass, gas, or grass - nobody rides for free.
@@ -21,13 +22,13 @@ Your coding agent has selected: promotional fuel vouchers.
   freegas hub                       Generate Traceloop Hub config
   freegas serve                     Open the station on 127.0.0.1:4040
 
-Options: --home DIR (default .freegas), --port N, --quiet, --help
+Options: --home DIR (default .freegas), --port N, --quiet, --no-open, --help
 For local Hub: set FREEGAS_API_KEY in both processes for access control.
 Environment credentials override locally imported credentials.
 No card tricks. No account juggling. Just the free tier you already have.`;
 
 async function main() {
-  const { values, positionals } = parseArgs({ allowPositionals: true, options: { home: { type: 'string' }, port: { type: 'string' }, quiet: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
+  const { values, positionals } = parseArgs({ allowPositionals: true, options: { home: { type: 'string' }, port: { type: 'string' }, quiet: { type: 'boolean' }, 'no-open': { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
   const [command, arg, ...extra] = positionals;
   if (values.help || !command) { console.log(help); return; }
   if (!['init', 'list', 'stations', 'doctor', 'import', 'export', 'credentials', 'hub', 'serve'].includes(command)) throw new Error(`Unknown command: ${command}. The pump is confused. Try freegas --help.`);
@@ -106,7 +107,11 @@ async function main() {
     const server = createServer(router, { token: process.env.FREEGAS_API_KEY });
     server.requestTimeout = 30000;
     server.on('error', error => { console.error(`Station closed: ${error.code ?? 'listen failed'}. Try another --port.`); process.exitCode = 1; });
-    server.listen(port, '127.0.0.1', () => console.error(`FREEGAS: http://127.0.0.1:${port}/v1\nYour tokens are on a scholarship. Ctrl+C closes the station.`));
+    server.listen(port, '127.0.0.1', () => {
+      const url = `http://127.0.0.1:${port}/`;
+      console.error(`FREEGAS: ${url}v1\nDashboard: ${url}\nYour tokens are on a scholarship. Ctrl+C closes the station.`);
+      if (!values['no-open']) openDashboard(url, { onError: () => console.error(`Browser stayed parked. Open ${url} for the dashboard.`) });
+    });
     for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { server.close(); server.closeAllConnections(); });
     return;
   }

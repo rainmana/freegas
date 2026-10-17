@@ -5,6 +5,38 @@ export class FuelRouter {
   constructor({ config, providers, env }, { fetchImpl = fetch, now = Date.now, log = () => {} } = {}) {
     Object.assign(this, { config, providers, env, fetchImpl, now, log });
     this.health = new Map();
+    this.startedAt = this.now();
+    this.activity = [];
+    this.sequence = 0;
+    this.totals = { requests: 0, completed: 0, failed: 0, cancelled: 0, attempts: 0, fallbacks: 0 };
+  }
+  record(type, requestId, row, extra = {}) {
+    this.activity.push({ id: ++this.sequence, at: this.now(), type, requestId, ...(row ? { provider: row.p.id, model: row.m.id } : {}), ...extra });
+    if (this.activity.length > 100) this.activity.shift();
+  }
+  outcome(type, requestId, row) {
+    this.totals[type]++;
+    if (row) row.state.lastOutcome = type;
+    this.record(type, requestId, row);
+  }
+  snapshot() {
+    const now = this.now();
+    const stations = this.providers.flatMap(p => p.models.map(m => {
+      const state = this.health.get(`${p.id}/${m.id}`);
+      const configured = (!p.keyEnv || Boolean(this.env[p.keyEnv])) && (m.offer !== 'trial' || this.config.allowTrials);
+      const status = p.keyEnv && !this.env[p.keyEnv] ? 'missing_key'
+        : m.offer === 'trial' && !this.config.allowTrials ? 'trial_disabled'
+        : state?.until > now ? 'cooldown'
+        : state?.inFlight > 0 ? 'in_flight'
+        : state?.lastOutcome === 'completed' ? 'observed_success'
+        : state?.lastOutcome === 'failed' ? 'last_request_failed'
+        : state?.lastOutcome === 'cancelled' ? 'last_request_cancelled' : 'unverified';
+      return { provider: p.id, model: m.id, endpoint: p.baseUrl, tasks: [...m.tasks], capabilities: [...m.capabilities], offer: m.offer, priority: m.priority,
+        configured, status, inFlight: state?.inFlight ?? 0, cooldownUntil: state?.until > now ? state.until : null,
+        latencyMs: state?.latencyObserved ? state.latency : null, lastStatus: state?.lastStatus ?? null };
+    }));
+    // Explicit projection: never serialize config credentials, prompts, upstream bodies, or exceptions.
+    return { startedAt: this.startedAt, now, totals: { ...this.totals }, stations, activity: this.activity.map(event => ({ ...event })) };
   }
   candidates(body) {
     const alias = body.model;
@@ -33,8 +65,14 @@ export class FuelRouter {
     return rows.sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
   }
   async route(body, signal) {
+    const requestId = ++this.totals.requests;
+    try { return await this.routeRequest(body, signal, requestId); }
+    catch (error) { this.outcome(error.status === 499 ? 'cancelled' : 'failed', requestId); throw error; }
+  }
+  async routeRequest(body, signal, requestId) {
     const rows = this.candidates(body);
     if (!rows.length) throw new RouteError(503, 'empty_tank', 'No eligible pumps. Check credentials, task/capability tags, context, and cooldowns with freegas doctor.');
+    let attempt = 0;
     for (const row of rows) {
       const { p, m, key, state } = row;
       if (signal?.aborted) throw new RouteError(499, 'cancelled', 'Driver left the station.');
@@ -44,6 +82,10 @@ export class FuelRouter {
       const timer = setTimeout(abort, this.config.timeoutMs);
       const cleanup = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); };
       this.health.set(key, state); state.inFlight++;
+      state.lastOutcome = 'in_flight';
+      this.totals.attempts++;
+      if (attempt++) { this.totals.fallbacks++; this.record('fallback', requestId, row); }
+      this.record('attempt', requestId, row);
       const started = this.now();
       let handedOff = false;
       try {
@@ -53,12 +95,16 @@ export class FuelRouter {
           body: JSON.stringify({ ...body, model: m.id }),
         });
         if (response.ok) {
-          state.latency = this.now() - started; state.failures = 0;
+          state.latency = this.now() - started; state.latencyObserved = true; state.failures = 0; state.lastStatus = response.status;
+          this.record('accepted', requestId, row, { status: response.status });
           this.log(`${p.id}: tank acquired. Model ${m.id}.`);
           let done = false; handedOff = true;
-          return { response, provider: p.id, finish: () => { if (!done) { done = true; state.inFlight--; cleanup(); } } };
+          return { response, provider: p.id, finish: (result = 'completed') => {
+            if (!done) { done = true; state.inFlight--; cleanup(); this.outcome(['completed', 'cancelled'].includes(result) ? result : 'failed', requestId, row); }
+          } };
         }
         const status = response.status;
+        state.lastStatus = status; state.lastOutcome = 'failed';
         const retry = response.headers.get('retry-after');
         await response.body?.cancel();
         if (![401, 402, 403, 404, 408, 429].includes(status) && status < 500) {
@@ -69,11 +115,14 @@ export class FuelRouter {
         if ([401, 402, 403, 404].includes(status)) delay = 300000;
         state.until = this.now() + Math.max(1000, Math.min(Number.isFinite(delay) ? delay : 30000, 86400000));
         state.failures++;
+        this.record('cooldown', requestId, row, { status, until: state.until });
         this.log(`${p.id}: pump says ${status}. Trying the next station.`);
       } catch (e) {
         if (e instanceof RouteError) throw e;
-        if (signal?.aborted) throw new RouteError(499, 'cancelled', 'Driver left the station.');
+        if (signal?.aborted) { state.lastOutcome = 'cancelled'; throw new RouteError(499, 'cancelled', 'Driver left the station.'); }
         state.failures++; state.until = this.now() + 30000;
+        state.lastOutcome = 'failed';
+        this.record('cooldown', requestId, row, { until: state.until });
         this.log(`${p.id}: hose disconnected. Trying the next station.`);
       } finally {
         // Successful streams keep their deadline and occupancy until finish().

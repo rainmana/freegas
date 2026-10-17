@@ -10,7 +10,6 @@
     "test": "node --test test/*.test.js",
     "test:coverage": "node --experimental-test-coverage --test-coverage-include=src/*.js --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=90 --test test/*.test.js",
     "test:user": "node --test test/user.test.js",
-    "demo": "node scripts/demo.js",
     "start": "node bin/freegas.js serve",
     "check": "node scripts/check.js",
     "package": "node scripts/package.js",
