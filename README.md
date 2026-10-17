@@ -8,7 +8,7 @@ Nothing is really free. Freegas does its best to simulate it: load a **Pre-roll*
 
 Freegas takes your legitimate free-tier API keys, visits your configured **Gas Stations**, and switches pumps when a provider runs dry. Put [Traceloop Hub](https://github.com/traceloop/hub) in the driver's seat, point an OpenAI Chat Completions-compatible harness at it, and let your token budget ride shotgun.
 
-An idea from Alec and Ben, somewhere between useful infrastructure and a gas station parking lot joke. Champagne prompts. Complimentary-sample budget.
+An idea from Alec and Ben, somewhere between useful infrastructure and a gas station parking lot joke. [Here's how we got here](#two-pentesters-walk-into-a-token-bill). Champagne prompts. Complimentary-sample budget.
 
 **Working prototype, road-tested:** the actual Traceloop Hub → Freegas → Venice route passed a live tool round trip and streamed text. OpenCode 1.19.3 also completed a streamed coding session and wrote a verified test file through that route. These checks establish interoperability for that setup, not universal model compatibility or free account quotas. See the [test record](docs/verification.md).
 
@@ -106,6 +106,18 @@ Typical cooldowns are 30 seconds, or five minutes for auth/credit/model errors; 
 Free tiers have quotas, privacy terms, and enthusiastic upsell departments. `offer: free` is list metadata, not billing enforcement: your account may have paid billing enabled. Use provider-side spending limits and appropriate free accounts. Trial models are disabled unless you edit `allowTrials` in `.freegas/config.json`.
 
 Freegas uses accounts you legitimately control. No account juggling, ban evasion, or turning a rate limit into a personality contest. Prompts may move between configured providers on retry; review their data policies before sending code or secrets. Freegas logs provider/model IDs, never prompt bodies or keys.
+
+## Two pentesters walk into a token bill
+
+Ben and Alec work together as pentesters and often hang out outside of work. During one of those hangouts, Ben was lamenting how much inference tokens cost. Alec agreed. The machines were thinking. The wallets were suffering.
+
+Alec found projects like [Free-LLM](https://github.com/nejib1/Free-LLM), a directory of free inference providers, and [Traceloop Hub](https://github.com/traceloop/hub), an LLM gateway, and showed Ben the ingredients: there really were "free" inference providers, and a way to put a local endpoint in front of them. What if the endpoint could work through those providers as their quotas ran dry?
+
+Being security professionals, neither mistook a zero-dollar price tag for a promise of privacy. Those **sweet, sweet inference tokens** come with terms. Depending on the provider, your prompts, code, or other data may be part of the bargain. Check before you fill up. As the legendary adage goes: **"Ass, gas, or grass - nobody rides for free."**
+
+But maybe you could simulate free. When gas, groceries, and seemingly everything else already want a piece of your paycheck, stretching some legitimate free-tier quotas can at least make the next token bill hurt a little less.
+
+That's how Freegas was born: a useful tool, a parking lot joke, and two pentesters trying to get a few more miles out of the complimentary fuel vouchers.
 
 ## Under the hood
 
