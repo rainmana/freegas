@@ -1,0 +1,8 @@
+Generated with the built-in image_gen tool. Requested transparent background.
+
+Use case: logo-brand.
+Asset type: a standalone square app icon for the open-source project Freegas, a local AI inference router that hops between legitimate free-tier providers.
+Primary request: a funny but sleek gas-pump-meets-terminal mascot, suitable for the top of a GitHub README and recognizable as a small avatar.
+Subject: one compact retro gas pump with a terminal-like display, a subtly deadpan friendly expression, one neatly curled fuel hose, and a small dangling asterisk-shaped price tag as the visual joke that 'free' has a catch. Make the terminal cue unmistakable with a simple >_ glyph integrated cleanly into the display; no other lettering or numbers.
+Style: polished flat graphic mark, bold simple silhouette, clean thick contours, softly rounded geometry, restrained two-color plus neutral treatment, excellent contrast, crisp vector-like edges. Charming and slightly cheeky, not childish or corporate clip art.
+Composition: single centered icon occupying roughly 80% of a square canvas, generous even breathing room, no surrounding scene or frame. Genuine transparent background. Readable at 48 pixels and attractive at 200 pixels. No wordmark, slogans, gradients, 3D effects, mockups, extra objects, watermark, or fake transparency checkerboard.

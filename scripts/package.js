@@ -10,13 +10,15 @@ if (!npm) throw new Error('Run this with npm run package.');
 await mkdir('dist', { recursive: true });
 const [packed] = JSON.parse(execFileSync(process.execPath, [npm, 'pack', '--json', '--ignore-scripts', '--pack-destination', 'dist'], { encoding: 'utf8' }));
 for (const { path } of packed.files) {
-  if (!/^(bin\/|src\/|lists\/|docs\/|README\.md$|LICENSE$|CHANGELOG\.md$|package\.json$)/.test(path)) throw new Error(`Unexpected release file: ${path}`);
+  if (!/^(bin\/|src\/|lists\/|docs\/|assets\/|README\.md$|LICENSE$|CHANGELOG\.md$|package\.json$)/.test(path)) throw new Error(`Unexpected release file: ${path}`);
 }
 const archive = resolve('dist', packed.filename);
 const temp = await mkdtemp(join(tmpdir(), 'freegas-package-'));
 try {
   execFileSync('tar', ['-xzf', archive, '-C', temp]);
   const cli = join(temp, 'package', 'bin', 'freegas.js');
+  const icon = await readFile(join(temp, 'package', 'assets', 'freegas-icon.png'));
+  if (!icon.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) throw new Error('Packaged README icon is missing or invalid.');
   const output = execFileSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
   if (!output.includes('Ass, gas, or grass - nobody rides for free.')) throw new Error('Packaged CLI smoke failed.');
   execFileSync(process.execPath, [cli, 'init', '--home', join(temp, 'home')]);

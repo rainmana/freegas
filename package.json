@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "bin": { "freegas": "bin/freegas.js" },
-  "files": ["bin/", "src/", "lists/", "docs/", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": ["bin/", "src/", "lists/", "docs/", "assets/", "README.md", "LICENSE", "CHANGELOG.md"],
   "scripts": {
     "test": "node --test test/freegas.test.js test/release.test.js",
     "start": "node bin/freegas.js serve",
