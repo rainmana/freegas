@@ -8,6 +8,8 @@ Observed locally on 2026-10-17, Windows x64, Node.js 25.9.0:
 | Source syntax | `npm run check` passed |
 | Release package | `.tgz` extracted; packaged help, init, and Hub config generation passed |
 | Workflow syntax | actionlint 1.7.12 passed |
+| Hosted Node matrix | Windows/Linux/macOS, Node 22/24: all six test and package jobs passed in [the initial CI run](https://github.com/rainmana/freegas/actions/runs/39076613332) |
+| Hosted Hub build | Rust 1.88.0 on Linux built the pinned source and passed the actual gateway integration in [the initial Hub run](https://github.com/rainmana/freegas/actions/runs/39076613347) |
 | Actual Hub, deterministic providers | Nonstream tool loop wrote a verified file; 429 fell back once and cooldown prevented repeat hits; streamed text survived |
 | Actual Hub, live Venice | Tool round trip and streamed text passed |
 | OpenCode 1.19.3 → Hub → Freegas → Venice | Streamed coding session completed a `write` tool call; resulting file contained `FREEGAS_HARNESS_OK` |
@@ -48,6 +50,6 @@ Use `OPENCODE_BIN` for another installation. The harness step has a two-minute d
 
 ## Limits
 
-The hosted Windows/Linux/macOS Node 22/24 matrix and Linux Rust 1.88.0 Hub build must be observed on the implementation PR before calling those platforms verified. Release guard tests and workflow validation do not prove that GitHub has published a release. Actual tag/release creation is intentionally reserved for a merged version PR after successful post-merge checks.
+The hosted Windows/Linux/macOS Node 22/24 matrix and separate Linux Rust 1.88.0 Hub build have passed. Release guard tests and workflow validation do not prove that GitHub has published a release. Actual tag/release creation is intentionally reserved for a merged version PR after successful post-merge checks.
 
 The observed session is a small tool-writing task, not a coding-quality benchmark. Other providers, large repositories, partial tool-delta variations, images, strict JSON schemas, Responses API, and native Anthropic Messages remain outside this record.

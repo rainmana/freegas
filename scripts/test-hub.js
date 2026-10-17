@@ -121,7 +121,8 @@ try {
       await mkdir(resolve('.integration'), { recursive: true });
       await writeFile(resolve('.integration/opencode-smoke.log'), output);
       assert.equal((await readFile(join(work, 'answer.txt'), 'utf8')).trim(), 'FREEGAS_HARNESS_OK');
-      assert.match(output, /"type":"tool_use"|"type":"tool"/);
+      const events = output.split('\n').flatMap(line => { try { return [JSON.parse(line)]; } catch { return []; } });
+      assert.ok(events.some(event => event.type === 'tool_use' && ['write', 'edit', 'apply_patch'].includes(event.part?.tool) && event.part?.state?.status === 'completed'), 'No completed file-writing tool event.');
       report.checks.push('OpenCode 1.19.3 live streamed coding session wrote verified answer.txt');
     } finally { clearTimeout(deadline); }
   }

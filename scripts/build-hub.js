@@ -16,8 +16,8 @@ const lockPath = resolve(dir, 'Cargo.lock');
 const lock = await readFile(lockPath, 'utf8');
 // Upstream 0.10.1 still identifies its own root package as 0.9.3 in Cargo.lock.
 // Correct only that metadata; all dependency versions/checksums remain locked.
-if (lock.includes('name = "hub"\nversion = "0.9.3"')) await writeFile(lockPath, lock.replace('name = "hub"\nversion = "0.9.3"', 'name = "hub"\nversion = "0.10.1"'));
-else if (!lock.includes('name = "hub"\nversion = "0.10.1"')) throw new Error('Unexpected upstream Hub lockfile.');
+if (/name = "hub"\r?\nversion = "0\.9\.3"/.test(lock)) await writeFile(lockPath, lock.replace(/(name = "hub"\r?\nversion = )"0\.9\.3"/, '$1"0.10.1"'));
+else if (!/name = "hub"\r?\nversion = "0\.10\.1"/.test(lock)) throw new Error('Unexpected upstream Hub lockfile.');
 const args = [...(process.env.HUB_RUST_TOOLCHAIN ? [`+${process.env.HUB_RUST_TOOLCHAIN}`] : []), 'build', '--locked', '--bin', 'hub', '-j', '2'];
 const result = spawnSync('cargo', args, { cwd: dir, stdio: 'inherit', env: { ...process.env, CARGO_PROFILE_DEV_DEBUG: '0' } });
 if (result.error) throw result.error;

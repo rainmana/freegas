@@ -1,5 +1,7 @@
 {
-  "MD013": false,
-  "MD034": false,
-  "MD036": false
+  "config": {
+    "MD013": false,
+    "MD034": false,
+    "MD036": false
+  }
 }

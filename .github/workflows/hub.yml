@@ -29,6 +29,7 @@ jobs:
             ~/.cargo/git
             .integration/hub/target
           key: hub-linux-rust-1.88.0-e1be468-${{ hashFiles('scripts/build-hub.js') }}
+          restore-keys: hub-linux-rust-1.88.0-e1be468-
       - name: Build pinned upstream Hub
         run: node scripts/build-hub.js
         env:

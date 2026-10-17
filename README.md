@@ -93,7 +93,7 @@ All commands accept `--home DIR`; default storage is `.freegas` in the current d
 
 Typical cooldowns are 30 seconds, or five minutes for auth/credit/model errors; explicit retry delays are bounded to one day. Health resets on restart and is per model/process; multiple processes do not coordinate quotas. Context estimation budgets roughly one token per serialized character plus image/output reserves. It is not an exact tokenizer.
 
-## Bring your Pre-rolls. Leave the keys at home.
+## Bring your Pre-rolls. Leave the keys at home
 
 **Pre-rolls** are shareable JSON provider lists for coding, writing, research, or local models. They define endpoints, models, task tags, capabilities, priorities, and whether access is a free tier, trial, or local. Credentials are referenced by environment-variable name and imported separately. Ben named them; please direct all dispensary-related puns to the passenger seat.
 
