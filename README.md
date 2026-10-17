@@ -2,6 +2,27 @@
 
 > Ass, gas, or grass - nobody rides for free.
 
+<!-- markdownlint-configure-file { "MD033": { "allowed_elements": ["p", "a", "img", "picture", "source"] } } -->
+
+<p align="center">
+  <img src="assets/freegas-icon.png" width="200" height="200" alt="Freegas: a smug little terminal-faced gas pump with an asterisk on the nozzle">
+</p>
+
+<p align="center">
+  <a href="https://github.com/rainmana/freegas/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/rainmana/freegas/release.yml?branch=main&amp;style=flat-square&amp;label=CI" alt="Build and release workflow status"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Node.js-22.16%2B-05d88b?style=flat-square&amp;logo=nodedotjs&amp;logoColor=white" alt="Node.js 22.16 or newer"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-05d88b?style=flat-square" alt="MIT license"></a>
+  <a href="https://github.com/rainmana/freegas/stargazers"><img src="https://flat.badgen.net/github/stars/rainmana/freegas?icon=github&amp;color=ffd166" alt="GitHub stars"></a>
+</p>
+
+<p align="center">
+  <a href="#pull-up-to-the-pump">Quickstart</a> &nbsp;·&nbsp;
+  <a href="#the-dashboard">CLI</a> &nbsp;·&nbsp;
+  <a href="#bring-your-pre-rolls-leave-the-keys-at-home">Pre-rolls</a> &nbsp;·&nbsp;
+  <a href="#two-pentesters-walk-into-a-token-bill">Origin story</a> &nbsp;·&nbsp;
+  <a href="#fuel-deliveries-and-future-pit-stops">Roadmap</a>
+</p>
+
 Your coding agent has selected **gas**. Your bank account has selected **please stop**.
 
 Nothing is really free. Freegas does its best to simulate it: load a **Pre-roll** (a shareable provider list), pull into the available **Gas Stations**, and stretch legitimate free inference quotas as far as they'll go. The bill may arrive as rate limits, weaker models, or your data. Assume your prompts and code may be part of the bargain until you've checked each provider's terms.
@@ -11,6 +32,8 @@ Freegas takes your legitimate free-tier API keys, visits your configured **Gas S
 An idea from Alec and Ben, somewhere between useful infrastructure and a gas station parking lot joke. [Here's how we got here](#two-pentesters-walk-into-a-token-bill). Champagne prompts. Complimentary-sample budget.
 
 **Working prototype, road-tested:** the actual Traceloop Hub → Freegas → Venice route passed a live tool round trip and streamed text. OpenCode 1.19.3 also completed a streamed coding session and wrote a verified test file through that route. These checks establish interoperability for that setup, not universal model compatibility or free account quotas. See the [test record](docs/verification.md).
+
+---
 
 ## Pull up to the pump
 
@@ -34,6 +57,22 @@ On macOS/Linux, use `export GROQ_API_KEY='your-key'`. One key is enough to start
 The starter includes Groq's `llama-3.3-70b-versatile`, OpenRouter's `openrouter/free` router, and an optional local Ollama pump (`ollama pull qwen2.5-coder:7b`). Ollama must already be running; Freegas does not install models. Its conservative 4K context budget and lack of declared tool support mean tool-calling requests stay with compatible cloud stations.
 
 Run `npm link` to install the `freegas` command from this checkout. Otherwise use `node bin/freegas.js` wherever the docs say `freegas`. This package is not published to npm.
+
+## The dashboard
+
+| Command | What happens at the station |
+| --- | --- |
+| `freegas init` | Opens your first Gas Station with a starter Pre-roll |
+| `freegas stations` | Shows models, endpoints, and missing keys (`list` also works) |
+| `freegas doctor` | Checks configuration without spending inference requests |
+| `freegas serve` | Opens the local pump; `--quiet` silences route chatter |
+| `freegas import team-code.json` | Validates and installs another Pre-roll |
+| `freegas import https://example.org/code.json` | Imports a shared list over HTTPS |
+| `freegas export starter` | Prints a shareable list containing key names only |
+| `freegas credentials ./my-keys.json` | Merges keys into private local storage |
+| `freegas hub` | Generates configuration for Traceloop Hub |
+
+All commands accept `--home DIR`; default storage is `.freegas` in the current directory, ignored by Git. Set `FREEGAS_HOME` to an absolute directory to share stations across projects. `serve --port 5050` changes the direct port; update Hub's `base_url` to match.
 
 ## Put Hub in the driver's seat
 
@@ -67,21 +106,13 @@ curl http://127.0.0.1:4040/v1/chat/completions \
 
 Harnesses must support **Chat Completions** with a custom base URL and model. There is no Responses API or native Anthropic Messages adapter yet. [OpenCode has a tested recipe](docs/hub.md#opencode). “Any harness” is the destination; this version has a specific driveway.
 
-## The dashboard
+## Bring your Pre-rolls. Leave the keys at home
 
-| Command | What happens at the station |
-| --- | --- |
-| `freegas init` | Opens your first Gas Station with a starter Pre-roll |
-| `freegas stations` | Shows models, endpoints, and missing keys (`list` also works) |
-| `freegas doctor` | Checks configuration without spending inference requests |
-| `freegas serve` | Opens the local pump; `--quiet` silences route chatter |
-| `freegas import team-code.json` | Validates and installs another Pre-roll |
-| `freegas import https://example.org/code.json` | Imports a shared list over HTTPS |
-| `freegas export starter` | Prints a shareable list containing key names only |
-| `freegas credentials ./my-keys.json` | Merges keys into private local storage |
-| `freegas hub` | Generates configuration for Traceloop Hub |
+**Pre-rolls** are shareable JSON provider lists for coding, writing, research, or local models. They define endpoints, models, task tags, capabilities, priorities, and whether access is a free tier, trial, or local. Credentials are referenced by environment-variable name and imported separately. Ben named them; please direct all dispensary-related puns to the passenger seat.
 
-All commands accept `--home DIR`; default storage is `.freegas` in the current directory, ignored by Git. Set `FREEGAS_HOME` to an absolute directory to share stations across projects. `serve --port 5050` changes the direct port; update Hub's `base_url` to match.
+[Free-LLM](https://github.com/nejib1/Free-LLM) is a useful discovery map. A directory entry does not establish a working API, free account quota, or model capability. This version imports the [Freegas JSON format](docs/lists.md), not arbitrary Markdown tables. Use directories to curate lists; automatic directory adapters are a future pit stop.
+
+**Importing a list trusts its endpoints with eligible future prompts and named credentials.** Inspect community lists first. HTTPS imports reject redirects. `source` records provenance; it is not a signature or trust guarantee.
 
 ## How it picks a Gas Station
 
@@ -92,14 +123,6 @@ All commands accept `--home DIR`; default storage is `.freegas` in the current d
 5. Forward successful response bytes, including SSE tool-call deltas. After accepting a response, Freegas never replays it elsewhere. An interrupted stream ends the connection.
 
 Typical cooldowns are 30 seconds, or five minutes for auth/credit/model errors; explicit retry delays are bounded to one day. Health resets on restart and is per model/process; multiple processes do not coordinate quotas. Context estimation budgets roughly one token per serialized character plus image/output reserves. It is not an exact tokenizer.
-
-## Bring your Pre-rolls. Leave the keys at home
-
-**Pre-rolls** are shareable JSON provider lists for coding, writing, research, or local models. They define endpoints, models, task tags, capabilities, priorities, and whether access is a free tier, trial, or local. Credentials are referenced by environment-variable name and imported separately. Ben named them; please direct all dispensary-related puns to the passenger seat.
-
-[Free-LLM](https://github.com/nejib1/Free-LLM) is a useful discovery map. A directory entry does not establish a working API, free account quota, or model capability. This version imports the [Freegas JSON format](docs/lists.md), not arbitrary Markdown tables. Use directories to curate lists; automatic directory adapters are a future pit stop.
-
-**Importing a list trusts its endpoints with eligible future prompts and named credentials.** Inspect community lists first. HTTPS imports reject redirects. `source` records provenance; it is not a signature or trust guarantee.
 
 ## Nobody rides for free, technically
 
@@ -137,6 +160,22 @@ Freegas stays on **Node.js for now**. [Release automation](docs/releases.md) pro
 Other pit stops: persistent quota budgets, directory-import previews, and more tested harness recipes. Contributions welcome, especially sourced Pre-rolls and errors that make you exhale through your nose. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 MIT licensed. Original repository-template notices remain in [LICENSE](LICENSE). Thanks to [Traceloop Hub](https://github.com/traceloop/hub), [Free-LLM](https://github.com/nejib1/Free-LLM), and the people running the actual Gas Stations.
+
+---
+
+## Star history
+
+<p align="center">
+  <a href="https://www.star-history.com/#rainmana/freegas&amp;Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=rainmana/freegas&amp;type=Date&amp;theme=dark">
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=rainmana/freegas&amp;type=Date">
+      <img src="https://api.star-history.com/svg?repos=rainmana/freegas&amp;type=Date" width="820" alt="Freegas GitHub star history over time; open the interactive chart">
+    </picture>
+  </a>
+</p>
+
+---
 
 ## Personal capacity and employer disclosure
 
