@@ -1,0 +1,33 @@
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Node.js
+node_modules/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.swp
