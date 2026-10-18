@@ -76,7 +76,7 @@ try {
   const configPath = join(home, 'hub.yaml'); const hubConfig = JSON.parse(await readFile(configPath, 'utf8'));
   hubConfig.providers[0].base_url = `http://127.0.0.1:${freegasPort}/v1`;
   await writeFile(configPath, JSON.stringify(hubConfig));
-  const freegas = launch(process.execPath, [join(root, 'bin/freegas.js'), 'serve', '--quiet', '--port', String(freegasPort), '--home', home]);
+  const freegas = launch(process.execPath, [join(root, 'bin/freegas.js'), 'serve', '--quiet', '--no-open', '--port', String(freegasPort), '--home', home]);
   const hub = launch(hubBin, [], { CONFIG_FILE_PATH: configPath, PORT: String(hubPort) });
   const hubBase = `http://127.0.0.1:${hubPort}`;
   await ready(`http://127.0.0.1:${freegasPort}`, freegas); await ready(hubBase, hub);

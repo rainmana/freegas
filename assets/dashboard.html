@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Freegas · Gas Station dashboard</title>
+  <link rel="icon" href="/icon.png">
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="/dashboard.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="masthead">
+      <div class="brand"><img src="/icon.png" alt="Freegas gas pump"><div><p class="eyebrow">YOUR LOCAL INFERENCE FUEL DESK</p><h1>FREEGAS<span> / Gas Stations</span></h1><p class="quote">Ass, gas, or grass - nobody rides for free.</p></div></div>
+      <div class="connection"><span id="connection" class="badge muted">Connecting</span><p id="updated">Waiting for the station</p></div>
+    </header>
+
+    <div id="notice" class="notice" role="status" hidden></div>
+    <form id="unlock" class="unlock" hidden>
+      <label for="token">Local API token <span>(FREEGAS_API_KEY)</span></label>
+      <div><input id="token" type="password" autocomplete="off" required placeholder="Your local fuel cap key"><button type="submit">Unlock dashboard</button></div>
+      <p>The token stays in this page's memory until you reload. It is never put in the URL or browser storage.</p>
+    </form>
+
+    <section class="metrics" aria-label="Routing totals since this process started">
+      <div class="metric"><p>Configured pumps</p><strong id="configured">—</strong><span>Configuration, not a reachability check</span></div>
+      <div class="metric"><p>Active requests</p><strong id="active">—</strong><span>Including response streams</span></div>
+      <div class="metric"><p>Completed requests</p><strong id="completed">—</strong><span id="failures">No request history loaded</span></div>
+      <div class="metric"><p>Fallback attempts</p><strong id="fallbacks">—</strong><span>Extra stops on the same trip</span></div>
+    </section>
+
+    <div class="toolbar"><div><h2>The forecourt</h2><p>Real router state. No background inference calls. No imaginary full tanks.</p></div><div class="buttons"><button id="refresh" type="button">Refresh now</button><button id="pause" type="button">Pause updates</button></div></div>
+    <div class="layout">
+      <section class="panel stations" aria-label="Configured Gas Stations">
+        <div class="panel-heading"><h3>Gas Stations</h3><span id="station-count">Waiting for configuration</span></div>
+        <div class="table-scroll"><table><thead><tr><th scope="col">Station / model</th><th scope="col">Fuel / tasks</th><th scope="col">Observed status</th><th scope="col">Header latency</th></tr></thead><tbody id="stations"><tr><td colspan="4" class="empty">Pulling into the station…</td></tr></tbody></table></div>
+        <p class="panel-note">“Untested” means no successful request observed in this process. Missing keys and disabled trials stay parked. Free quota and billing are provider-controlled.</p>
+      </section>
+      <section class="panel activity" aria-label="Live routing activity">
+        <div class="panel-heading"><h3>At the pump</h3><span>Latest 100 events</span></div>
+        <ol id="activity"><li class="empty">Waiting for router activity. Point your harness at this station to start a trip.</li></ol>
+        <p class="panel-note">Provider/model IDs and outcomes only. Prompts, responses, and credentials stay off this dashboard.</p>
+      </section>
+    </div>
+    <footer><div><strong>Your tokens are on a scholarship.</strong><p>Dashboard: <span id="dashboard-url">this origin</span> · Inference: <code id="api-url">/v1</code></p></div><p id="session">Process history resets on restart · Updates every second</p></footer>
+    <noscript><p class="notice">Enable JavaScript to see live station status. The inference API works without this dashboard.</p></noscript>
+  </main>
+</body>
+</html>

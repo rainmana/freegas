@@ -1,6 +1,11 @@
 import http from 'node:http';
 import { once } from 'node:events';
 import { RouteError } from './router.js';
+import { dashboardAssets, dashboardHeaders } from './dashboard.js';
+
+export function isLoopbackHost(host, port) {
+  return ['127.0.0.1', 'localhost', '[::1]'].some(name => host === `${name}:${port}` || (port === 80 && host === name));
+}
 
 function json(res, status, value, headers = {}) {
   res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers });
@@ -11,8 +16,19 @@ export function createServer(router, { token } = {}) {
     const controller = new AbortController();
     res.on('close', () => controller.abort());
     let routed;
+    let outcome = 'failed';
     try {
+      const port = req.socket.localPort;
+      if (!isLoopbackHost(req.headers.host, port)) throw new RouteError(403, 'host_blocked', 'This station only accepts loopback hostnames.');
       if (req.url === '/health' && req.method === 'GET') return json(res, 200, { status: 'ok', message: 'Station open. Provider availability sold separately.' });
+      const dashboard = req.method === 'GET' && (dashboardAssets.has(req.url) || req.url === '/api/status');
+      if (dashboard) {
+        if ((req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) || req.headers['sec-fetch-site'] === 'cross-site') throw new RouteError(403, 'browser_blocked', 'This dashboard stays at its own station.');
+        const asset = dashboardAssets.get(req.url);
+        if (asset) { res.writeHead(200, { ...dashboardHeaders, 'content-type': asset.type }); res.end(asset.body); return; }
+        if (token && req.headers.authorization !== `Bearer ${token}`) throw new RouteError(401, 'unauthorized', 'Unlock the dashboard with your local API token.');
+        return json(res, 200, router.snapshot(), dashboardHeaders);
+      }
       if (req.headers.origin) throw new RouteError(403, 'browser_blocked', 'This pump serves local harnesses. Browser origins are blocked.');
       if (token && req.headers.authorization !== `Bearer ${token}`) throw new RouteError(401, 'unauthorized', 'Wrong fuel cap key. Check your local API token.');
       if (req.url === '/v1/models' && req.method === 'GET') {
@@ -45,9 +61,11 @@ export function createServer(router, { token } = {}) {
         if (!res.write(chunk)) await once(res, 'drain', { signal: controller.signal });
       }
       res.end();
+      outcome = 'completed';
     } catch (e) {
+      if (controller.signal.aborted) outcome = 'cancelled';
       if (res.headersSent) res.destroy();
       else if (!res.destroyed) json(res, e.status ?? 500, { error: { code: e.code && e instanceof RouteError ? e.code : 'station_error', type: 'freegas_error', message: e instanceof RouteError ? e.message : 'Station trouble. Check local configuration; upstream details withheld.' } }, e.retryAfter ? { 'retry-after': String(e.retryAfter) } : {});
-    } finally { routed?.finish(); }
+    } finally { routed?.finish(outcome); }
   });
 }

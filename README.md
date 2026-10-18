@@ -37,9 +37,9 @@ An idea from Alec and Ben, somewhere between useful infrastructure and a gas sta
 
 ## A quick lap around the station
 
-![Recorded Freegas CLI session: importing a Pre-roll, checking stations, falling back after a 429, and completing a verified file-writing tool round trip](assets/freegas-road-trip.jpg)
+![Actual Freegas dashboard showing configured Gas Stations, observed request status, and live routing activity](assets/freegas-road-trip.jpg)
 
-Captured from real CLI processes and HTTP requests in the automated user test, rendered in a transcript viewer. Local fixture providers simulate the quota failure and tool-capable response; this is not a live provider or free-quota demonstration. Reproduce it with `npm run demo`.
+The real app, served by `freegas serve` at `http://127.0.0.1:4040/`. It opens in your browser and updates from the running router every second. This capture includes a custom Venice station and observed inference activity; that demonstrates compatibility, not free quota. Untested pumps stay labeled untested. Use `--no-open` on a headless machine.
 
 ## Pull up to the pump
 
@@ -71,7 +71,7 @@ Run `npm link` to install the `freegas` command from this checkout. Otherwise us
 | `freegas init` | Opens your first Gas Station with a starter Pre-roll |
 | `freegas stations` | Shows models, endpoints, and missing keys (`list` also works) |
 | `freegas doctor` | Checks configuration without spending inference requests |
-| `freegas serve` | Opens the local pump; `--quiet` silences route chatter |
+| `freegas serve` | Starts the API and opens the live dashboard; `--quiet` silences route chatter, `--no-open` skips the browser |
 | `freegas import team-code.json` | Validates and installs another Pre-roll |
 | `freegas import https://example.org/code.json` | Imports a shared list over HTTPS |
 | `freegas export starter` | Prints a shareable list containing key names only |
