@@ -1,11 +1,22 @@
 {
   "name": "freegas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Champagne prompts. Tap-water budget. A local inference fuel selector for Traceloop Hub.",
   "type": "module",
   "private": true,
-  "bin": { "freegas": "bin/freegas.js" },
-  "files": ["bin/", "src/", "lists/", "docs/", "assets/", "README.md", "LICENSE", "CHANGELOG.md"],
+  "bin": {
+    "freegas": "bin/freegas.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "lists/",
+    "docs/",
+    "assets/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "test": "node --test test/*.test.js",
     "test:coverage": "node --experimental-test-coverage --test-coverage-include=src/*.js --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=90 --test test/*.test.js",
@@ -15,6 +26,8 @@
     "package": "node scripts/package.js",
     "test:hub": "node scripts/test-hub.js"
   },
-  "engines": { "node": ">=22.16" },
+  "engines": {
+    "node": ">=22.16"
+  },
   "license": "MIT"
 }
