@@ -1,10 +1,11 @@
 # Road-test record
 
-Observed locally on 2026-10-17, Windows x64, Node.js 25.9.0:
+Observed locally on 2026-10-17 and 2026-10-18, Windows x64, Node.js 25.9.0:
 
 | Check | Result |
 | --- | --- |
-| Unit/local HTTP/CLI and release guards | 44 tests passed; core coverage: 100% lines, 99.13% branches, 98% functions (Node 25.9.0); includes real subprocess user journeys, dashboard state/access controls, and cancellation of indefinitely open upstream bodies |
+| Unit/local HTTP/CLI and release guards | 45 tests passed; core coverage: 100% lines, 99.14% branches, 98.08% functions (Node 25.9.0); includes real subprocess user journeys, dashboard state/access controls, and cancellation of indefinitely open upstream bodies |
+| HTTP default port (2026-10-18) | Real port-80 requests to `/`, `/health`, and `/v1/models` reproduced 403 before the Host fix and returned 200 afterward; regression cases cover default/non-default ports, loopback authorities, and hostile hosts |
 | Real dashboard browser checks | Actual `serve --port 5050` app updated after two real Venice requests (JSON and SSE); pause/resume and manual refresh passed. A separate token-protected instance rejected an incorrect token, unlocked with the correct token, and forgot it on reload |
 | README screenshot | Full-page browser capture of the actual dashboard and its observed live request activity; the transcript viewer was removed |
 | Source syntax | `npm run check` passed |

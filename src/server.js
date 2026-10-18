@@ -3,6 +3,10 @@ import { once } from 'node:events';
 import { RouteError } from './router.js';
 import { dashboardAssets, dashboardHeaders } from './dashboard.js';
 
+export function isLoopbackHost(host, port) {
+  return ['127.0.0.1', 'localhost', '[::1]'].some(name => host === `${name}:${port}` || (port === 80 && host === name));
+}
+
 function json(res, status, value, headers = {}) {
   res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers });
   res.end(JSON.stringify(value));
@@ -15,8 +19,7 @@ export function createServer(router, { token } = {}) {
     let outcome = 'failed';
     try {
       const port = req.socket.localPort;
-      const hosts = [`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`];
-      if (!hosts.includes(req.headers.host)) throw new RouteError(403, 'host_blocked', 'This station only accepts loopback hostnames.');
+      if (!isLoopbackHost(req.headers.host, port)) throw new RouteError(403, 'host_blocked', 'This station only accepts loopback hostnames.');
       if (req.url === '/health' && req.method === 'GET') return json(res, 200, { status: 'ok', message: 'Station open. Provider availability sold separately.' });
       const dashboard = req.method === 'GET' && (dashboardAssets.has(req.url) || req.url === '/api/status');
       if (dashboard) {

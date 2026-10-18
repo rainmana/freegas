@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { once, EventEmitter } from 'node:events';
 import http from 'node:http';
 import { FuelRouter } from '../src/router.js';
-import { createServer } from '../src/server.js';
+import { createServer, isLoopbackHost } from '../src/server.js';
 import { openDashboard } from '../src/browser.js';
 
 const provider = (id, extra = {}) => ({ id, baseUrl: 'https://example.org/v1', models: [{ id: 'coder', tasks: ['code'], capabilities: ['tools'], offer: 'free', priority: 50, context: 32000 }], ...extra });
@@ -16,6 +16,21 @@ async function listen(t, r, options) {
   t.after(() => { server.closeAllConnections(); server.close(); });
   return `http://127.0.0.1:${server.address().port}`;
 }
+
+test('loopback Host validation accepts omitted HTTP default ports without widening non-default access', () => {
+  for (const name of ['127.0.0.1', 'localhost', '[::1]']) {
+    assert.equal(isLoopbackHost(name, 80), true);
+    assert.equal(isLoopbackHost(`${name}:80`, 80), true);
+    assert.equal(isLoopbackHost(`${name}:5050`, 5050), true);
+    assert.equal(isLoopbackHost(name, 5050), false);
+    assert.equal(isLoopbackHost(`${name}:80`, 5050), false);
+    assert.equal(isLoopbackHost(`${name}:5050`, 80), false);
+  }
+  for (const host of [undefined, '', 'rebind.example', 'rebind.example:80', '127.0.0.1.evil.example', 'localhost@evil.example', 'http://localhost', 'localhost:80:80']) {
+    assert.equal(isLoopbackHost(host, 80), false);
+    assert.equal(isLoopbackHost(host, 5050), false);
+  }
+});
 
 test('dashboard starts with honest untested, missing-key, and trial-disabled states', () => {
   const trial = provider('trial'); trial.models[0].offer = 'trial';
