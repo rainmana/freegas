@@ -36,7 +36,7 @@ jobs:
           HUB_RUST_TOOLCHAIN: 1.88.0
       - name: Run actual Hub, Freegas, quota fallback, and tool loop
         run: npm run test:hub
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: hub-report
           path: .integration/hub-report.json
