@@ -41,7 +41,7 @@ jobs:
       - name: Create version tag and draft release
         if: steps.state.outputs.candidate == 'true'
         id: published
-        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           skip-github-pull-request: true
       - name: Attach tested package and publish release
@@ -51,7 +51,7 @@ jobs:
         run: node scripts/finalize-release.js
       - name: Propose the next version PR
         id: proposed
-        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           skip-github-release: true
       - name: Explicitly test bot-created version PRs
